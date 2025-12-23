@@ -47,6 +47,57 @@ global IS_DEBUG
 IS_DEBUG = args.debug
 
 
+class ToolTip:
+    """
+    It creates a tooltip for a given widget as the mouse goes on it.
+    """
+    def __init__(self, widget, text='widget info'):
+        self.waittime = 500     # milliseconds
+        self.wraplength = 300   # pixels
+        self.widget = widget
+        self.text = text
+        self.widget.bind("<Enter>", self.enter)
+        self.widget.bind("<Leave>", self.leave)
+        self.widget.bind("<ButtonPress>", self.leave)
+        self.id = None
+        self.tw = None
+
+    def enter(self, event=None):
+        self.schedule()
+
+    def leave(self, event=None):
+        self.unschedule()
+        self.hidetip()
+
+    def schedule(self):
+        self.unschedule()
+        self.id = self.widget.after(self.waittime, self.showtip)
+
+    def unschedule(self):
+        id = self.id
+        self.id = None
+        if id:
+            self.widget.after_cancel(id)
+
+    def showtip(self, event=None):
+        x = y = 0
+        x = self.widget.winfo_rootx() + 25
+        y = self.widget.winfo_rooty() + 20
+        self.tw = tk.Toplevel(self.widget)
+        self.tw.wm_overrideredirect(True)
+        self.tw.wm_geometry("+%d+%d" % (x, y))
+        label = tk.Label(self.tw, text=self.text, justify='left',
+                       background="#ffffe0", relief='solid', borderwidth=1,
+                       wraplength = self.wraplength)
+        label.pack(ipadx=1)
+
+    def hidetip(self):
+        tw = self.tw
+        self.tw= None
+        if tw:
+            tw.destroy()
+
+
 class RepackApp:
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -109,6 +160,7 @@ class RepackApp:
         row += 1
         self.run_btn = ttk.Button(frm, text="重打字體", command=self._on_run)
         self.run_btn.grid(column=0, row=row, sticky=tk.W)
+        ToolTip(self.run_btn, "執行字體重打包流程：\n1. 從 res.pak 提取中文文本\n2. 根據文本與選定 TTF 生成字體\n3. 將生成的字體打包進 assets.pak")
         self.status_lbl = tk.Label(frm, text="Ready")
         self.status_lbl.grid(column=1, row=row, sticky=tk.W, columnspan=2)
 
