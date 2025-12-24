@@ -161,8 +161,13 @@ class RepackApp:
         self.run_btn = ttk.Button(frm, text="重打字體", command=self._on_run)
         self.run_btn.grid(column=0, row=row, sticky=tk.W)
         ToolTip(self.run_btn, "執行字體重打包流程：\n1. 從 res.pak 提取中文文本\n2. 根據文本與選定 TTF 生成字體\n3. 將生成的字體打包進 assets.pak")
+
         self.status_lbl = tk.Label(frm, text="Ready")
-        self.status_lbl.grid(column=1, row=row, sticky=tk.W, columnspan=2)
+        self.status_lbl.grid(column=1, row=row, sticky=tk.W)
+
+        self.extract_btn = ttk.Button(frm, text="只提取文本", command=self._on_extract_only)
+        self.extract_btn.grid(column=2, row=row, sticky=tk.E)
+        ToolTip(self.extract_btn, "僅執行第一步：\n1. 從 res.pak 提取中文文本\n(不生成字體也不打包)")
 
         # Log area
         row += 1
@@ -253,12 +258,39 @@ class RepackApp:
         # run in background thread
         thread = threading.Thread(
             target=self._run_repack_thread,
-            args=(ttf, font_size, respak, lang),
+            args=(ttf, font_size, respak, lang, False),
             daemon=True,
         )
         thread.start()
 
-    def _run_repack_thread(self, ttf: str, font_size: int, respak: str, lang: str):
+    def _on_extract_only(self):
+        if self._running:
+            return
+
+        respak = self.respak_var.get()
+        lang = self.lang_var.get()
+        # ttf/font_size not strictly needed for extract only but we pass them to keep signature simple
+        ttf = self.ttf_var.get() or "default"
+        font_size = self.font_size_var.get()
+
+        # disable controls
+        self.run_btn.config(state=tk.DISABLED)
+        self.extract_btn.config(state=tk.DISABLED)
+        self._running = True
+        self._append_log(
+            f"Starting extraction only: res_pak={respak}, lang={lang}\n"
+        )
+        self._animate_spinner()
+
+        # run in background thread
+        thread = threading.Thread(
+            target=self._run_repack_thread,
+            args=(ttf, font_size, respak, lang, True),
+            daemon=True,
+        )
+        thread.start()
+
+    def _run_repack_thread(self, ttf: str, font_size: int, respak: str, lang: str, extract_only: bool):
         # Locate Wartales_repack_font.exe (expect in the repo root or same dir as this script)
         exe_name = "Wartales_repack_font.exe"
         exe_path = os.path.join(os.path.dirname(__file__), exe_name)
@@ -281,11 +313,13 @@ class RepackApp:
             "-lang",
             lang,
         ]
+        if extract_only:
+            argv.append("--extract-only")
 
         # Run subprocess and capture stdout/stderr
         if IS_DEBUG:
             print(f"Running subprocess: {' '.join(argv)}")
-            # just sleep 10 seconds to simulate
+            # just sleep 5 seconds to simulate
             proc = subprocess.run(["sleep", "5"], capture_output=True, text=True)
             output = proc.stdout or ""
             exit_code = proc.returncode
@@ -319,6 +353,7 @@ class RepackApp:
             )
         self._running = False
         self.run_btn.config(state=tk.NORMAL)
+        self.extract_btn.config(state=tk.NORMAL)
         self.status_lbl.config(text="Ready")
 
 

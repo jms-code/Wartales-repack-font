@@ -144,6 +144,11 @@ def main(argv: List[str]) -> int:
         default="ChironHeiHK-Text-R-400",
         help="specific TTF file to process (default: ChironHeiHK-Text-R-400.ttf)",
     )
+    parser.add_argument(
+        "--extract-only",
+        action="store_true",
+        help="only extract localization files and exit",
+    )
 
     args = parser.parse_args(argv)
 
@@ -168,6 +173,10 @@ def main(argv: List[str]) -> int:
     # Step 3: copy into flat folder
     print("Copying extracted xml to flat folder for txt2fnt input...")
     copy_extracted_to_flat(EXTRACTED_RES, extracted_txt_folder, args.language)
+
+    if args.extract_only:
+        print("Extraction complete. Stopping as requested.")
+        return 0
 
     # Step 4: check font tools and available TTFs
     if not check_prereqs(require_quickbms=False, require_font_tools=True):
