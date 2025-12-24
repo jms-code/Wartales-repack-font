@@ -20,6 +20,7 @@ import glob
 from typing import List
 
 from source.util.res_i18n_extractor import extract_i18n
+from source.util.res_i18n_injector import inject_i18n
 
 
 # Use only relative paths (relative to current working directory)
@@ -149,8 +150,27 @@ def main(argv: List[str]) -> int:
         action="store_true",
         help="only extract localization files and exit",
     )
+    parser.add_argument(
+        "--inject-xml",
+        dest="inject_xml_dir",
+        help="directory containing XML files to inject into res.pak (skips other steps)",
+    )
 
     args = parser.parse_args(argv)
+
+    # Handle injection mode
+    if args.inject_xml_dir:
+        print(f"Injecting XML from {args.inject_xml_dir} into {args.res_pak}...")
+        if not check_prereqs(require_quickbms=True, require_font_tools=False):
+             print("Missing QuickBMS tool")
+             return 2
+             
+        if inject_i18n(args.res_pak, args.inject_xml_dir, args.language):
+            print("Injection complete.")
+            return 0
+        else:
+            print("Injection failed.")
+            return 1
 
     # Step 1: check quickbms
     if not check_prereqs(require_quickbms=True, require_font_tools=False):
