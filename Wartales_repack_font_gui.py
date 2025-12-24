@@ -170,7 +170,7 @@ class RepackApp:
 
         # Run button and status
         row += 1
-        
+
         # Col 0: Run button + Help
         run_frame = ttk.Frame(frm)
         run_frame.grid(column=0, row=row, sticky=tk.W)
@@ -327,7 +327,7 @@ class RepackApp:
         lang = self.lang_var.get()
         ttf = self.ttf_var.get() or "default"
         font_size = self.font_size_var.get()
-        
+
         new_xml_dir = "_new_xml_"
         if not os.path.exists(new_xml_dir):
             messagebox.showerror("Error", f"Directory not found: {new_xml_dir}\nPlease create it and put xml files there.")

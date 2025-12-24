@@ -9,18 +9,22 @@ Quick facts (what an agent needs to know)
 - Key scripts:
   - `Wartales_repack_font.py` — orchestration CLI (main entrypoint).
   - `source/util/res_i18n_extractor.py` — uses QuickBMS to extract `lang/texts_{lang}.xml` and `lang/export_{lang}.xml` into `workspace/extracted-res/`.
+  - `source/util/res_i18n_injector.py` — uses QuickBMS (reimport mode) to inject XML files from a source folder back into `res.pak`.
   - `source/util/assets_font_repacker.py` — repacks modified fonts into `assets.pak` using `quickbms_4gb_files.exe` and `script-v2.bms`.
 - Tooling expectations (manual setup required in `_tools_`):
   - `_tools_/quickbms/quickbms.exe` and `_tools_/quickbms/quickbms_4gb_files.exe` (used by extractor & repacker).
   - `_tools_/txt2fnt/txt2fnt.exe` (produces `.fnt` + `.png` files).
   - `_tools_/fontgen/fontgen.exe` (optional/used by some workflows).
   - Place font files under `_tools_/ttf/` (agents must not assume system fonts).
-- QuickBMS scripts used: `_script_/script-v1.bms` (extract) and `_script_/script-v2.bms` (repack).
+- QuickBMS scripts used: `_script_/script-v1.bms` (extract/inject) and `_script_/script-v2.bms` (repack).
 
 How to run the main flows (examples)
 - Extract localization files (list-only):
   - Python API: `extract_i18n(language='zh', res_pak='test_data/res.pak', list_only=True)`
-  - CLI (via orchestration script): `py Wartales_repack_font.py --res-pak test_data/res.pak -lang zh`
+  - CLI (via orchestration script): `py Wartales_repack_font.py --res-pak test_data/res.pak -lang zh --extract-only`
+- Inject localization files (update translation):
+  - Python API: `inject_i18n(res_pak='test_data/res.pak', xml_source_dir='workspace/new_translation', language='zh')`
+  - CLI: `py Wartales_repack_font.py --res-pak test_data/res.pak --inject-xml workspace/new_translation`
 - Create fonts from extracted XML (txt2fnt):
   - Example command printed by `Wartales_repack_font.py`:
     `txt2fnt.exe -tf workspace/extracted-txt -fs 48 -ttf ChironHeiHK-Text-R-400.ttf -o noto_sans_cjk_regular -ff workspace/modded-assets/ui/fonts`
@@ -39,6 +43,7 @@ Important project-specific patterns
 - Minimal external state: scripts intentionally print subprocess stdout/stderr rather than swallowing it — prefer explicit, observable behavior in edits.
 - File expectations:
   - Extractor expects `workspace/extracted-res/lang/texts_{lang}.xml` and `workspace/extracted-res/lang/export_{lang}.xml`.
+  - Injector stages files into `workspace/inject-res/lang/` before reimporting.
   - `txt2fnt` must output `workspace/modded-assets/ui/fonts/<outname>.fnt` and `.png`.
 
 When editing or adding features (agent guidance)

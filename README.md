@@ -25,7 +25,34 @@ It is assumed that you have already updated the localization files.
 
 # Wartales_repack_font
 
-### `Wartales_repack_font.py` will:
+### `Wartales_repack_font.py` supports three main modes:
+
+#### 1. Full Repack (Default)
+`py Wartales_repack_font.py --res-pak res.pak -lang zh`
+
+This runs the complete workflow:
+1. **Extract**: Extracts localization files (`texts_zh.xml`, `export_zh.xml`) from `res.pak`.
+2. **Generate**: Converts extracted XML + TTF into bitmap fonts (`.fnt`, `.png`) using `txt2fnt`.
+3. **Repack**: Packs the generated fonts into `assets.pak`.
+
+#### 2. Extract Only
+`py Wartales_repack_font.py --res-pak res.pak -lang zh --extract-only`
+
+- Performs only the extraction step.
+- Useful if you want to inspect the XML files or manually edit them before generating fonts.
+- Output files are in `workspace/extracted-txt/`.
+
+#### 3. Inject XML (Translation Update)
+`py Wartales_repack_font.py --res-pak res.pak -lang zh --inject-xml _new_xml_`
+
+- Injects modified XML files from a folder (e.g., `_new_xml_`) back into `res.pak`.
+- **Does not** touch fonts or `assets.pak`.
+- Useful for testing translation changes without regenerating fonts.
+- The source folder must contain `texts_{lang}.xml` and `export_{lang}.xml`.
+
+---
+
+### Detailed Steps (Full Repack)
 
 1. check if working directories contain necessary files for next step:
    - `_tools_/quickbms/quickbms.exe`
