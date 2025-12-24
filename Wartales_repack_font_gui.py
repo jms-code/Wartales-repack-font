@@ -228,6 +228,7 @@ class RepackApp:
         # Internal state
         self._running = False
         self._spinner_phase = 0
+        self._current_action_text = "執行中"
 
     def _refresh_ttf_list(self):
         ttfs = find_ttfs()
@@ -253,9 +254,10 @@ class RepackApp:
             self.status_lbl.config(text="就緒", font=self._status_font_normal, foreground=self._status_fg_normal, anchor="w", justify="left")
             self.status_lbl.grid_configure(sticky=tk.W)
             return
-        phases = ["執行中.", "執行中..", "執行中...", "執行中    "]
+        phases = [".", "..", "...", "    "]
+        base_text = self._current_action_text
         self.status_lbl.config(
-            text=phases[self._spinner_phase % len(phases)],
+            text=base_text + phases[self._spinner_phase % len(phases)],
             font=self._status_font_large,
             foreground="red",
             anchor="center",
@@ -285,7 +287,11 @@ class RepackApp:
 
         # disable controls
         self.run_btn.config(state=tk.DISABLED)
+        self.extract_btn.config(state=tk.DISABLED)
+        self.inject_btn.config(state=tk.DISABLED)
+        self.mixed_btn.config(state=tk.DISABLED)
         self._running = True
+        self._current_action_text = "重打包中"
         self._append_log(
             f"開始重打包流程：字體={ttf}, 大小={font_size}, res_pak={respak}, 語言={lang}\n"
         )
@@ -315,6 +321,7 @@ class RepackApp:
         self.inject_btn.config(state=tk.DISABLED)
         self.mixed_btn.config(state=tk.DISABLED)
         self._running = True
+        self._current_action_text = "提取中"
         self._append_log(
             f"開始僅提取文本：res_pak={respak}, 語言={lang}\n"
         )
@@ -348,6 +355,7 @@ class RepackApp:
         self.inject_btn.config(state=tk.DISABLED)
         self.mixed_btn.config(state=tk.DISABLED)
         self._running = True
+        self._current_action_text = "注入中"
         self._append_log(
             f"開始注入翻譯：xml目錄={new_xml_dir}, res_pak={respak}, 語言={lang}\n"
         )
@@ -381,6 +389,7 @@ class RepackApp:
         self.inject_btn.config(state=tk.DISABLED)
         self.mixed_btn.config(state=tk.DISABLED)
         self._running = True
+        self._current_action_text = "注入並打包中"
         self._append_log(
             f"開始注入並重打包：xml目錄={new_xml_dir}, res_pak={respak}, 語言={lang}\n"
         )
