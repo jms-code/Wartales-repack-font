@@ -168,13 +168,21 @@ class RepackApp:
         )
         lang_box.grid(column=1, row=row, sticky=tk.W)
 
+        # Mixed mode button
+        row += 1
+        mixed_frame = ttk.Frame(frm)
+        mixed_frame.grid(column=0, row=row, sticky=tk.W, columnspan=4)
+        self.mixed_btn = ttk.Button(mixed_frame, text="注入新翻譯 及 重打字體", command=self._on_inject_and_repack)
+        self.mixed_btn.pack(side=tk.LEFT)
+        HelpLabel(mixed_frame, "完整流程：\n1. 將 _new_xml_ 注入 res.pak\n2. 執行提取、生成字體、打包 assets.pak").pack(side=tk.LEFT, padx=2)
+
         # Run button and status
         row += 1
 
         # Col 0: Run button + Help
         run_frame = ttk.Frame(frm)
         run_frame.grid(column=0, row=row, sticky=tk.W)
-        self.run_btn = ttk.Button(run_frame, text="重打字體", command=self._on_run)
+        self.run_btn = ttk.Button(run_frame, text="只重打字體", command=self._on_run)
         self.run_btn.pack(side=tk.LEFT)
         HelpLabel(run_frame, "執行字體重打包流程：\n1. 從 res.pak 提取中文文本\n2. 根據文本與選定 TTF 生成字體\n3. 將生成的字體打包進 assets.pak").pack(side=tk.LEFT, padx=2)
 
@@ -351,6 +359,39 @@ class RepackApp:
         )
         thread.start()
 
+    def _on_inject_and_repack(self):
+        if self._running:
+            return
+
+        respak = self.respak_var.get()
+        lang = self.lang_var.get()
+        ttf = self.ttf_var.get() or "default"
+        font_size = self.font_size_var.get()
+
+        new_xml_dir = "_new_xml_"
+        if not os.path.exists(new_xml_dir):
+            messagebox.showerror("Error", f"Directory not found: {new_xml_dir}\nPlease create it and put xml files there.")
+            return
+
+        # disable controls
+        self.run_btn.config(state=tk.DISABLED)
+        self.extract_btn.config(state=tk.DISABLED)
+        self.inject_btn.config(state=tk.DISABLED)
+        self.mixed_btn.config(state=tk.DISABLED)
+        self._running = True
+        self._append_log(
+            f"Starting inject and repack: xml_dir={new_xml_dir}, res_pak={respak}, lang={lang}\n"
+        )
+        self._animate_spinner()
+
+        # run in background thread
+        thread = threading.Thread(
+            target=self._run_repack_thread,
+            args=(ttf, font_size, respak, lang, "inject_and_repack"),
+            daemon=True,
+        )
+        thread.start()
+
     def _run_repack_thread(self, ttf: str, font_size: int, respak: str, lang: str, mode: str):
         # Locate Wartales_repack_font.exe (expect in the repo root or same dir as this script)
         exe_name = "Wartales_repack_font.exe"
@@ -379,6 +420,10 @@ class RepackApp:
         elif mode == "inject":
             argv.append("--inject-xml")
             argv.append("_new_xml_")
+        elif mode == "inject_and_repack":
+            argv.append("--inject-xml")
+            argv.append("_new_xml_")
+            argv.append("--continue-after-inject")
 
         # Run subprocess and capture stdout/stderr
         if IS_DEBUG:
@@ -419,6 +464,7 @@ class RepackApp:
         self.run_btn.config(state=tk.NORMAL)
         self.extract_btn.config(state=tk.NORMAL)
         self.inject_btn.config(state=tk.NORMAL)
+        self.mixed_btn.config(state=tk.NORMAL)
         self.status_lbl.config(text="Ready")
 
 

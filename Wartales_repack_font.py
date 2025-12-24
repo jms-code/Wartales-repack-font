@@ -150,6 +150,11 @@ def main(argv: List[str]) -> int:
         dest="inject_xml_dir",
         help="directory containing XML files to inject into res.pak (skips other steps)",
     )
+    parser.add_argument(
+        "--continue-after-inject",
+        action="store_true",
+        help="continue with full repack flow after injection",
+    )
 
     args = parser.parse_args(argv)
 
@@ -162,7 +167,8 @@ def main(argv: List[str]) -> int:
 
         if inject_i18n(args.res_pak, args.inject_xml_dir, args.language):
             print("Injection complete.")
-            return 0
+            if not args.continue_after_inject:
+                return 0
         else:
             print("Injection failed.")
             return 1
