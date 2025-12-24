@@ -57,7 +57,7 @@ def extract_i18n(
         args = ["-f", filt, script_bms, res_pak, output_dir]
 
     # logging the command and args
-    print(f"Running quickbms: {bms_exe} {' '.join(args)}")
+    print(f"執行 quickbms: {bms_exe} {' '.join(args)}")
 
     result = subprocess.run([bms_exe] + args, capture_output=True, text=True)
     print(result.stdout)
@@ -76,7 +76,7 @@ def extract_i18n(
     isAllExtracted = len(extracted) == len(filters)
 
     if isAllExtracted:
-        print("Extraction successful")
+        print("提取成功")
     else:
-        print("Extraction failed")
+        print("提取失敗")
     return isAllExtracted

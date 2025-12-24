@@ -20,22 +20,22 @@ def inject_i18n(res_pak: str, xml_source_dir: str, language: str = "zh") -> bool
 
     # 1. Verify inputs
     if not os.path.exists(res_pak):
-        print(f"Error: res.pak not found at {res_pak}")
+        print(f"錯誤: 未在 {res_pak} 找到 res.pak")
         return False
 
     if not os.path.exists(xml_source_dir):
-        print(f"Error: XML source directory not found at {xml_source_dir}")
+        print(f"錯誤: 未在 {xml_source_dir} 找到 XML 來源目錄")
         return False
 
     bms_exe = os.path.join(quickbms_folder, "quickbms.exe")
     script_bms = os.path.join(script_folder, "script-v1.bms")
 
     if not os.path.exists(bms_exe):
-        print(f"Error: QuickBMS executable not found at {bms_exe}")
+        print(f"錯誤: 未在 {bms_exe} 找到 QuickBMS 執行檔")
         return False
 
     if not os.path.exists(script_bms):
-        print(f"Error: BMS script not found at {script_bms}")
+        print(f"錯誤: 未在 {script_bms} 找到 BMS 腳本")
         return False
 
     # 2. Prepare staging area
@@ -56,32 +56,32 @@ def inject_i18n(res_pak: str, xml_source_dir: str, language: str = "zh") -> bool
         if os.path.exists(src_path):
             dst_path = os.path.join(staging_lang_dir, fname)
             shutil.copy2(src_path, dst_path)
-            print(f"Staged for injection: {fname}")
+            print(f"已暫存以供注入: {fname}")
             found_any = True
         else:
-            print(f"Warning: {fname} not found in {xml_source_dir}")
+            print(f"警告: 在 {xml_source_dir} 中未找到 {fname}")
 
     if not found_any:
-        print("Error: No matching XML files found to inject.")
+        print("錯誤: 未找到符合的 XML 檔案以供注入。")
         return False
 
     # 4. Run QuickBMS reimport
     # Command: quickbms -w -r -r script.bms archive.pak input_folder
     cmd = [bms_exe, "-w", "-r", "-r", script_bms, res_pak, staging_dir]
 
-    print(f"Running reimport: {' '.join(cmd)}")
+    print(f"執行重新導入: {' '.join(cmd)}")
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True)
         # print(proc.stdout) # Verbose output might be too much, but useful for debug
         if proc.returncode != 0:
-            print("QuickBMS reimport failed.")
+            print("QuickBMS 重新導入失敗。")
             print(proc.stdout)
             print(proc.stderr)
             return False
 
-        print("Injection successful.")
+        print("注入成功。")
         return True
 
     except Exception as e:
-        print(f"Exception during reimport: {e}")
+        print(f"重新導入期間發生異常: {e}")
         return False

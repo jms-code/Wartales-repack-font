@@ -33,7 +33,7 @@ MODDED_ASSETS = os.path.join(WORKSPACE, "modded-assets", "ui", "fonts")
 
 def check_file(path: str) -> bool:
     if not os.path.exists(path):
-        print(f"Missing: {path}")
+        print(f"缺少檔案: {path}")
         return False
     return True
 
@@ -62,7 +62,7 @@ def run_txt2fnt(ttf: str, fs: int = 48) -> int:
         str(MODDED_ASSETS),
         # "--treat-xml-as-text"
     ]
-    print("Running:", " ".join(cmd))
+    print("執行指令:", " ".join(cmd))
     # txt2fnt expects to be run from the folder containing the ttf (it loads by name)
     proc = subprocess.run(cmd, capture_output=True, text=True)
     print(proc.stdout)
@@ -76,10 +76,10 @@ def verify_txt2fnt_outputs() -> bool:
     png = os.path.join(MODDED_ASSETS, "noto_sans_cjk_regular.png")
     ok = True
     if not os.path.exists(fnt):
-        print(f"Missing expected output file: {fnt}")
+        print(f"缺少預期輸出檔案: {fnt}")
         ok = False
     if not os.path.exists(png):
-        print(f"Missing expected output file: {png}")
+        print(f"缺少預期輸出檔案: {png}")
         ok = False
     return ok
 
@@ -94,9 +94,9 @@ def copy_extracted_to_flat(extracted_res: str, dest: str, language: str) -> None
     for p in candidates:
         if os.path.exists(p):
             shutil.copy2(p, os.path.join(dest, os.path.basename(p)))
-            print(f"Copied {p} -> {os.path.join(dest, os.path.basename(p))}")
+            print(f"已複製 {p} -> {os.path.join(dest, os.path.basename(p))}")
         else:
-            print(f"Warning: expected extracted file not found: {p}")
+            print(f"警告: 未找到預期的提取檔案: {p}")
 
 
 def check_prereqs(
@@ -110,12 +110,18 @@ def check_prereqs(
         ok = check_file(os.path.join(TOOLS, "txt2fnt", "txt2fnt.exe")) and ok
         ttfs = find_ttfs(os.path.join(TOOLS, "ttf"))
         if not ttfs:
-            print(f"No TTFs found in {os.path.join(TOOLS, 'ttf')}")
+            print(f"在 {os.path.join(TOOLS, 'ttf')} 中未找到 TTF 檔案")
             ok = False
     return ok
 
 
 def main(argv: List[str]) -> int:
+    # Force UTF-8 output for Windows consoles to avoid UnicodeEncodeError with Chinese characters
+    if sys.stdout and sys.stdout.encoding != 'utf-8':
+        sys.stdout.reconfigure(encoding='utf-8')
+    if sys.stderr and sys.stderr.encoding != 'utf-8':
+        sys.stderr.reconfigure(encoding='utf-8')
+
     parser = argparse.ArgumentParser(description="Wartales repack font helper")
     parser.add_argument(
         "-lang",
@@ -160,55 +166,55 @@ def main(argv: List[str]) -> int:
 
     # Handle injection mode
     if args.inject_xml_dir:
-        print(f"Injecting XML from {args.inject_xml_dir} into {args.res_pak}...")
+        print(f"正在將 XML 從 {args.inject_xml_dir} 注入到 {args.res_pak}...")
         if not check_prereqs(require_quickbms=True, require_font_tools=False):
-            print("Missing QuickBMS tool")
+            print("缺少 QuickBMS 工具")
             return 2
 
         if inject_i18n(args.res_pak, args.inject_xml_dir, args.language):
-            print("Injection complete.")
+            print("注入完成。")
             if not args.continue_after_inject:
                 return 0
         else:
-            print("Injection failed.")
+            print("注入失敗。")
             return 1
 
     # Step 1: check quickbms
     if not check_prereqs(require_quickbms=True, require_font_tools=False):
-        print("Missing QuickBMS tool: please place _tools_/quickbms/quickbms.exe")
+        print("缺少 QuickBMS 工具：請放置 _tools_/quickbms/quickbms.exe")
         return 2
 
     res_pak = args.res_pak
     if not os.path.exists(res_pak):
-        print(f"res.pak not found: {res_pak}")
+        print(f"未找到 res.pak: {res_pak}")
         return 3
 
-    print("Extracting localization files...")
+    print("正在提取本地化檔案...")
     ok = extract_i18n(
         language=args.language, res_pak=str(res_pak), list_only=False, verbose=True
     )
     if not ok:
-        print("Extraction failed")
+        print("提取失敗")
         return 4
 
     # Step 3: copy into flat folder
-    print("Copying extracted xml to flat folder for txt2fnt input...")
+    print("正在將提取的 xml 複製到 txt2fnt 輸入資料夾...")
     copy_extracted_to_flat(EXTRACTED_RES, extracted_txt_folder, args.language)
 
     if args.extract_only:
-        print("Extraction complete. Stopping as requested.")
+        print("提取完成。依請求停止。")
         return 0
 
     # Step 4: check font tools and available TTFs
     if not check_prereqs(require_quickbms=False, require_font_tools=True):
         print(
-            "Missing font tools. Please ensure _tools_/fontgen, _tools_/txt2fnt and _tools_/ttf exist"
+            "缺少字體工具。請確保 _tools_/fontgen, _tools_/txt2fnt 和 _tools_/ttf 存在"
         )
         return 5
 
     ttfs = find_ttfs(os.path.join(TOOLS, "ttf"))
     if not ttfs:
-        print("No TTF files to process")
+        print("沒有可處理的 TTF 檔案")
         return 6
 
     # Step 5: run txt2fnt
@@ -219,29 +225,29 @@ def main(argv: List[str]) -> int:
     )
 
     if rc != 0:
-        print(f"txt2fnt failed with exit code: {rc}")
+        print(f"txt2fnt 執行失敗，退出代碼: {rc}")
         any_failures = True
     else:
         if not verify_txt2fnt_outputs():
             any_failures = True
 
     if any_failures:
-        print(".fnt failed to generate correctly")
+        print(".fnt 生成失敗")
         return 7
 
     # Step 6: repack modified font assets into assets.pak
     try:
         from source.util.assets_font_repacker import repack_assets_font
     except Exception as e:
-        print(f"Failed to import assets repacker: {e}")
+        print(f"無法導入 assets repacker: {e}")
         return 8
 
-    print("Repacking modified assets into assets.pak...")
+    print("正在將修改後的資源重打包進 assets.pak...")
     if not repack_assets_font():
-        print("Repack failed")
+        print("重打包失敗")
         return 8
 
-    print("Done.")
+    print("完成。")
     return 0
 
 

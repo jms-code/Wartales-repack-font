@@ -20,25 +20,25 @@ def repack_assets_font() -> bool:
 
     # sanity checks
     if not os.path.exists(bms_4gb_exe):
-        print(f"Missing quickbms_4gb executable: {bms_4gb_exe}")
+        print(f"缺少 quickbms_4gb 執行檔: {bms_4gb_exe}")
         return False
     if not os.path.exists(script_bms):
-        print(f"Missing script file: {script_bms}")
+        print(f"缺少腳本檔案: {script_bms}")
         return False
 
     cmd = [bms_4gb_exe, "-w", "-r", "-r", script_bms, assets_pak, modded_assets_dir]
-    print("Running:", " ".join(cmd))
+    print("執行指令:", " ".join(cmd))
     proc = subprocess.run(cmd, capture_output=True, text=True)
     # print(proc.stdout)
     # print(proc.stderr)
 
     if proc.returncode != 0:
-        print(f"quickbms_4gb returned non-zero exit code: {proc.returncode}")
+        print(f"quickbms_4gb 返回非零退出代碼: {proc.returncode}")
         return False
 
     if not os.path.exists(assets_pak):
-        print(f"Expected assets pack not produced: {assets_pak}")
+        print(f"未生成預期的資源包: {assets_pak}")
         return False
 
-    print(f"Repacked assets to {assets_pak}")
+    print(f"已將資源重打包至 {assets_pak}")
     return True

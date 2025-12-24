@@ -107,7 +107,7 @@ class HelpLabel(ttk.Label):
         self.bind("<Button-1>", self.show_msgbox)
 
     def show_msgbox(self, event):
-        messagebox.showinfo("Help", self.msg)
+        messagebox.showinfo("說明", self.msg)
 
 
 class RepackApp:
@@ -132,7 +132,7 @@ class RepackApp:
 
         # Res.pak input (disabled, fixed to res.pak in cwd)
         row = 0
-        ttk.Label(frm, text="res.pak path:").grid(column=0, row=row, sticky=tk.W)
+        ttk.Label(frm, text="res.pak 路徑：").grid(column=0, row=row, sticky=tk.W)
         self.respak_var = tk.StringVar(value="res.pak")
         ttk.Entry(frm, textvariable=self.respak_var, width=50, state="disabled").grid(
             column=1, row=row, sticky=tk.W, columnspan=2
@@ -155,13 +155,13 @@ class RepackApp:
         )
         self._refresh_ttf_list()
         self.ttf_menu.grid(column=1, row=row, sticky=tk.W)
-        ttk.Button(frm, text="Refresh", command=self._refresh_ttf_list).grid(
+        ttk.Button(frm, text="重新整理", command=self._refresh_ttf_list).grid(
             column=2, row=row, sticky=tk.W
         )
 
         # Language (disabled for now)
         row += 1
-        ttk.Label(frm, text="Language:").grid(column=0, row=row, sticky=tk.W)
+        ttk.Label(frm, text="語言：").grid(column=0, row=row, sticky=tk.W)
         self.lang_var = tk.StringVar(value="zh")
         lang_box = ttk.Combobox(
             frm, textvariable=self.lang_var, values=["zh"], state="disabled", width=10
@@ -182,12 +182,12 @@ class RepackApp:
         # Col 0: Run button + Help
         run_frame = ttk.Frame(frm)
         run_frame.grid(column=0, row=row, sticky=tk.W)
-        self.run_btn = ttk.Button(run_frame, text="只重打字體", command=self._on_run)
+        self.run_btn = ttk.Button(run_frame, text="以現有的文本重打字體", command=self._on_run)
         self.run_btn.pack(side=tk.LEFT)
         HelpLabel(run_frame, "執行字體重打包流程：\n1. 從 res.pak 提取中文文本\n2. 根據文本與選定 TTF 生成字體\n3. 將生成的字體打包進 assets.pak").pack(side=tk.LEFT, padx=2)
 
         # Col 1: Status
-        self.status_lbl = tk.Label(frm, text="Ready")
+        self.status_lbl = tk.Label(frm, text="就緒")
         self.status_lbl.grid(column=1, row=row, sticky=tk.W)
 
         # Col 2: Extract button + Help
@@ -206,7 +206,7 @@ class RepackApp:
 
         # Log area
         row += 1
-        ttk.Label(frm, text="Output log:").grid(column=0, row=row, sticky=tk.W)
+        ttk.Label(frm, text="輸出日誌：").grid(column=0, row=row, sticky=tk.W)
         row += 1
         self.log = scrolledtext.ScrolledText(frm, height=18, wrap=tk.WORD)
         self.log.grid(column=0, row=row, columnspan=4, sticky=tk.N + tk.S + tk.E + tk.W)
@@ -234,7 +234,7 @@ class RepackApp:
         if not ttfs:
             self.ttf_menu["values"] = []
             self.ttf_var.set("")
-            self.ttf_menu.set("(no TTFs found)")
+            self.ttf_menu.set("(未找到 TTF)")
         else:
             self.ttf_menu["values"] = ttfs
             # Prefer ChironGoRoundTC-400R.ttf if available, otherwise select the first entry
@@ -250,10 +250,10 @@ class RepackApp:
     def _animate_spinner(self):
         if not self._running:
             # Reset to normal appearance
-            self.status_lbl.config(text="Ready", font=self._status_font_normal, foreground=self._status_fg_normal, anchor="w", justify="left")
+            self.status_lbl.config(text="就緒", font=self._status_font_normal, foreground=self._status_fg_normal, anchor="w", justify="left")
             self.status_lbl.grid_configure(sticky=tk.W)
             return
-        phases = ["Running.", "Running..", "Running...", "Running    "]
+        phases = ["執行中.", "執行中..", "執行中...", "執行中    "]
         self.status_lbl.config(
             text=phases[self._spinner_phase % len(phases)],
             font=self._status_font_large,
@@ -274,8 +274,8 @@ class RepackApp:
         ttf = self.ttf_var.get()
         if not ttf:
             messagebox.showwarning(
-                "No TTF",
-                "No TTF selected. Please add a .ttf file to _tools_/ttf and Refresh.",
+                "未選擇字體",
+                "未選擇 TTF 檔案。請將 .ttf 檔案放入 _tools_/ttf 並重新整理。",
             )
             return
 
@@ -287,7 +287,7 @@ class RepackApp:
         self.run_btn.config(state=tk.DISABLED)
         self._running = True
         self._append_log(
-            f"Starting repack: ttf={ttf}, fs={font_size}, res_pak={respak}, lang={lang}\n"
+            f"開始重打包流程：字體={ttf}, 大小={font_size}, res_pak={respak}, 語言={lang}\n"
         )
         self._animate_spinner()
 
@@ -313,9 +313,10 @@ class RepackApp:
         self.run_btn.config(state=tk.DISABLED)
         self.extract_btn.config(state=tk.DISABLED)
         self.inject_btn.config(state=tk.DISABLED)
+        self.mixed_btn.config(state=tk.DISABLED)
         self._running = True
         self._append_log(
-            f"Starting extraction only: res_pak={respak}, lang={lang}\n"
+            f"開始僅提取文本：res_pak={respak}, 語言={lang}\n"
         )
         self._animate_spinner()
 
@@ -338,16 +339,17 @@ class RepackApp:
 
         new_xml_dir = "_new_xml_"
         if not os.path.exists(new_xml_dir):
-            messagebox.showerror("Error", f"Directory not found: {new_xml_dir}\nPlease create it and put xml files there.")
+            messagebox.showerror("錯誤", f"找不到目錄：{new_xml_dir}\n請建立該目錄並放入 xml 檔案。")
             return
 
         # disable controls
         self.run_btn.config(state=tk.DISABLED)
         self.extract_btn.config(state=tk.DISABLED)
         self.inject_btn.config(state=tk.DISABLED)
+        self.mixed_btn.config(state=tk.DISABLED)
         self._running = True
         self._append_log(
-            f"Starting injection: xml_dir={new_xml_dir}, res_pak={respak}, lang={lang}\n"
+            f"開始注入翻譯：xml目錄={new_xml_dir}, res_pak={respak}, 語言={lang}\n"
         )
         self._animate_spinner()
 
@@ -370,7 +372,7 @@ class RepackApp:
 
         new_xml_dir = "_new_xml_"
         if not os.path.exists(new_xml_dir):
-            messagebox.showerror("Error", f"Directory not found: {new_xml_dir}\nPlease create it and put xml files there.")
+            messagebox.showerror("錯誤", f"找不到目錄：{new_xml_dir}\n請建立該目錄並放入 xml 檔案。")
             return
 
         # disable controls
@@ -380,7 +382,7 @@ class RepackApp:
         self.mixed_btn.config(state=tk.DISABLED)
         self._running = True
         self._append_log(
-            f"Starting inject and repack: xml_dir={new_xml_dir}, res_pak={respak}, lang={lang}\n"
+            f"開始注入並重打包：xml目錄={new_xml_dir}, res_pak={respak}, 語言={lang}\n"
         )
         self._animate_spinner()
 
@@ -399,7 +401,7 @@ class RepackApp:
         if not os.path.exists(exe_path):
             exe_path = os.path.join(os.getcwd(), exe_name)
         if not os.path.exists(exe_path):
-            msg = f"Executable not found: {exe_name}. Please build the exe and place it in the repository root.\n"
+            msg = f"找不到執行檔：{exe_name}。請先編譯 exe 並放置於專案根目錄。\n"
             self.root.after(0, self._on_finish, False, msg)
             return
 
@@ -439,6 +441,7 @@ class RepackApp:
                   stdout=subprocess.PIPE,
                   stderr=subprocess.STDOUT,
                   text=True,
+                  encoding="utf-8",
                   creationflags=subprocess.CREATE_NO_WINDOW
               )
               output = proc.stdout or ""
@@ -455,17 +458,17 @@ class RepackApp:
         # append output to log and re-enable controls
         self._append_log(output + "\n")
         if success:
-            messagebox.showinfo("Repack finished", "Repack completed successfully.")
+            messagebox.showinfo("完成", "流程執行成功。")
         else:
             messagebox.showerror(
-                "Repack failed", "Repack failed. See output for details."
+                "失敗", "流程執行失敗。請查看日誌以了解詳情。"
             )
         self._running = False
         self.run_btn.config(state=tk.NORMAL)
         self.extract_btn.config(state=tk.NORMAL)
         self.inject_btn.config(state=tk.NORMAL)
         self.mixed_btn.config(state=tk.NORMAL)
-        self.status_lbl.config(text="Ready")
+        self.status_lbl.config(text="就緒")
 
 
 def main():
