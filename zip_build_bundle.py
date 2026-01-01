@@ -4,7 +4,7 @@ Zip the contents of the `dist/` folder into a single zip file stored in
 `build/`.
 
 Behavior:
-- By default uses the Unicode filename: ``Wartales_戰爭傳說_重打中文字體包.zip``
+- By default uses the Unicode filename: ``Wartales 戰爭傳說 重注中文字體包.zip``
   and stores it under the `build/` directory.
 - If writing the Unicode filename fails (some platforms/encodings), the
   script will fall back to an ASCII-safe name: ``Wartales_repack_zh.zip``.
@@ -23,7 +23,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-DEFAULT_ZIP_NAME = "Wartales_戰爭傳說_重打中文字體包.zip"
+DEFAULT_ZIP_NAME = "Wartales 戰爭傳說 重注中文字體包.zip"
 FALLBACK_ZIP_NAME = "Wartales_repack_zh.zip"
 
 
